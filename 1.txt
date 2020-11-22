@@ -1,0 +1,510 @@
+#include "btree.h"
+
+#if 0 
+typedef char BTDataType;
+typedef struct BinaryTreeNode
+{
+	BTDataType _data;
+	struct BinaryTreeNode* _left;
+	struct BinaryTreeNode* _right;
+}BTNode;
+
+#endif
+
+// 通过前序遍历的数组"ABD##E#H##CF##G##"构建二叉树
+BTNode* BinaryTreeCreate(BTDataType* a,  int* pi){
+	if (a[*pi] != '#'){
+		BTNode* root = (BTNode*)malloc(sizeof(BTNode));
+		root->_data = a[*pi];
+		++(*pi);
+		root->_left = BinaryTreeCreate(a, pi);
+		++(*pi);
+		root->_right = BinaryTreeCreate(a, pi);
+		return root;
+	}
+	else
+	{
+		return NULL;
+	}
+}
+// 二叉树销毁：传二级指针,通过二级指针改变其指向
+//			简单来说：root本来就是一级指针，直接传递一级指针就是值传递，需要改变指针的内容只有传递二级指针
+void BinaryTreeDestory(BTNode** root){
+	// 递归销毁
+	BTNode* cur = *root;
+	if (cur){
+		// 先释放子树，再释放根，否则根会被错过
+		BinaryTreeDestory(&cur->_left);
+		BinaryTreeDestory(&cur->_right);
+		free(cur);
+		*root = NULL;
+	}
+}
+// 二叉树节点个数
+int BinaryTreeSize(BTNode* root){
+	if (root){
+		return BinaryTreeSize(root->_left) + BinaryTreeSize(root->_right) + 1;
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+void BinaryTreeSize2(BTNode* root, int* num){
+	if (root){
+		++(*num);
+		BinaryTreeSize2(root->_left, num);
+		BinaryTreeSize2(root->_right, num);
+	}
+}
+// 二叉树叶子节点个数
+int BinaryTreeLeafSize(BTNode* root){
+	if (root){
+		if (root->_left == NULL && root->_right == NULL){
+			return BinaryTreeLeafSize(root->_left) + BinaryTreeLeafSize(root->_right) + 1;
+		}
+	}
+	else
+	{
+		return 0;
+	}
+}
+
+int BinaryTreeLeafSize2(BTNode* root){
+	// 空树
+	if (root == NULL)
+	{
+		return 0;
+	}
+	// 叶子节点
+	if (root->_left == NULL && root->_right == NULL){
+		return 1;
+	}
+	return BinaryTreeLeafSize2(root->_left) +
+		BinaryTreeLeafSize2(root->_right);
+}
+// 二叉树第k层节点个数
+// 求树的第k层节点的个数：左右子树第k-1层节点的个数和
+int BinaryTreeLevelKSize(BTNode* root, int k){
+	if (root == NULL)
+	{
+		return 0;
+	}
+	if (k == 1){
+		return 1;
+	}
+	return BinaryTreeLevelKSize(root->_left, k - 1) + BinaryTreeLevelKSize(root->_right, k - 1);
+}
+
+// 二叉树前序遍历
+void BinaryTreePrevOrder(BTNode* root){
+	if (root){
+		printf("%c ", root->_data);
+		BinaryTreePrevOrder(root->_left);
+		BinaryTreePrevOrder(root->_right);
+	}
+}
+
+
+//前序遍历非递归
+void BinaryTreePrevOrderNoR(BTNode* root){
+	std::stack<BTNode*> st;
+	if (root){
+		st.push(root);
+	}
+	BTNode* cur = NULL;
+	cur = st.top();
+	st.pop();
+	while (!st.empty() || cur){
+		while (cur){
+			printf("%c ", cur->_data);
+			st.push(cur);
+			cur = cur->_left;
+		}
+		cur = st.top();
+		st.pop();
+		cur = cur->_right;
+	}
+}
+
+// 前序遍历非递归 class
+void preOrder(BTNode* root){
+	// 借助栈模拟递归过程
+	// 栈中的节点：表示此节点及其左子树已经访问完成
+	std::stack<BTNode*> st;
+	BTNode* cur = root;
+	while (cur || !st.empty()){
+		while (cur){
+			// 前序遍历，访问当前节点
+			printf("%c ", cur->_data);
+			// 当前节点入栈
+			st.push(cur);
+			cur = cur->_left;
+		}
+		// 获取栈顶元素
+		cur = st.top();
+		st.pop();
+		// 访问右子树
+		cur = cur->_right;
+	}
+	printf("\n");
+}
+
+// 二叉树中序遍历
+void BinaryTreeInOrder(BTNode* root){
+	if (root){
+		BinaryTreeInOrder(root->_left);
+		printf("%c ", root->_data);
+		BinaryTreeInOrder(root->_right);
+	}
+}
+
+// 中序非递归
+void BinaryTreeInOrderNoR(BTNode* root){
+	std::stack<BTNode*> st;
+	if (root){
+		st.push(root);
+	}
+	BTNode* cur = st.top();
+	st.pop();
+	while (!st.empty() || cur){
+		while (cur){
+			st.push(cur);
+			cur = cur->_left;
+		}
+		cur = st.top();
+		st.pop();
+		printf("%c ", cur->_data);
+		cur = cur->_right;
+	}
+}
+
+// 中序：lesson 
+void inOrder(BTNode* root){
+	std::stack<BTNode*> st;
+	BTNode*  cur = root;
+	BTNode* top;
+
+	while (cur || !st.empty()){
+		while (cur){
+			// 当前节点入栈
+			st.push(cur);
+			cur = cur->_left;
+		}
+		// 获取栈顶元素
+		cur = st.top();
+		st.pop();
+		// 中序遍历，访问当前节点
+		printf("%c ", cur->_data);
+		// 访问右子树
+		cur = cur->_right;
+	}
+}
+// 二叉树后序遍历
+void BinaryTreePostOrder(BTNode* root){
+	if (root){
+		BinaryTreePostOrder(root->_left);
+		BinaryTreePostOrder(root->_right);
+		printf("%c ", root->_data);
+	}
+}
+
+
+// 后续非递归遍历
+void BinaryTreePostOrderNoR(BTNode* root){
+	std::stack < BTNode* > st ;
+	BTNode* cur = root;
+	BTNode* prev = NULL;
+	while (!st.empty() || cur){
+		while (cur){
+			st.push(cur);
+			cur = cur->_left;
+		}
+		// 得到栈顶元素
+		cur = st.top();
+		if (cur->_right == NULL || cur->_right == prev){
+			// 访问当前元素
+			printf("%c ", cur->_data);
+			st.pop(); // 访问完成就pop掉栈顶元素
+			// 更新当前访问的元素
+			prev = cur;
+			// 把prev指针更新之后，需要重置cur
+			cur = NULL;
+		}
+		else
+		{
+			// 如果不是叶子节点或者其右子树没有访问完成
+			// 就访问右子树，同时也不能 pop 栈顶
+			cur = cur->_right;
+		}
+	}
+}
+
+// 后续非递归
+void postOrder(BTNode* root){
+	std::stack<BTNode*> st;
+	BTNode* top;
+	// prev ：最后一次访问的位置
+	//  prev第一次更新的位置肯定是叶子，没有右子树，由于初始值无节点
+	BTNode* prev = NULL;
+	BTNode* cur = root;
+	while (!st.empty() || cur){
+		while (cur){
+			// 当前节点入栈
+			st.push(cur);
+			cur = cur->_left;
+		}
+
+		// 获取栈顶元素
+		top = st.top();
+		
+		// 判断右子树是否访问完成
+		// 没有右子树或者右子树已经访问完成
+		if (top->_right == NULL || top->_right == prev){
+			// 访问当前节点
+			printf("%c ", top->_data);
+			st.pop();
+			// 更新最后一次访问的位置
+			prev = top;
+		}
+		else
+		{
+			// 否则表示右子树还没有访问，需要首先访问右子树
+			cur = top->_right;
+		}
+	}
+}
+
+// 层序遍历
+void BinaryTreeLevelOrder(BTNode* root){
+	std::queue<BTNode*> q;
+	if (root)
+		q.push(root);
+	while (!q.empty()){
+		BTNode* root = q.front();
+		q.pop();
+		printf("%c ", root->_data);
+		if (root->_left)
+			q.push(root->_left);
+		if (root->_right)
+			q.push(root->_right);
+	}
+}
+
+// 求以 root 为根的树的高度
+int getH(BTNode* root){
+	if (root == NULL) return 0;
+	int left = getH(root->_left);
+	int right = getH(root->_right);
+	return left > right ? left + 1 : right + 1;
+}
+// 判断二叉树是否是完全二叉树
+// 可以通过层序遍历判断是否为完全二叉树
+// 当第一次访问到空节点，则之后的节点都是空节点，否则就不是完全二叉树(存在非空节点)
+int BinaryTreeComplete(BTNode* root){
+	// 通过层序遍历判断一棵树是否为完全二叉树
+	// 1、根入队
+	// 2、循环出队头元素
+		// a.队头元素如果非空，直接孩子入队（包含空的孩子节点）
+		// b.队头元素为空，判断队列中剩余元素是否都为空节点
+			// 如果都为空间点，表示为完全二叉树，否则不是完全二叉树
+	std::queue<BTNode*> q;
+	if (root)
+		q.push(root);
+	while (!q.empty()){
+		// 对头出队
+		BTNode* front = q.front();
+		q.pop();
+
+		// 如果对头不为空，孩子直接入队
+		if (front){
+			q.push(front->_left);
+			q.push(front->_right);
+		}
+		else
+		{
+			break;
+		}
+	}
+	// 判断队列中剩余元素是否都为空节点
+	while (!q.empty()){
+		BTNode* front = q.front();
+		q.pop();
+		if (front){
+			// 有剩余的非空节点，说明不是一颗完全二叉树
+			return 0;
+		}
+	}
+	// 剩余节点都是空节点，是一颗完全二叉树
+	return 1;
+}
+
+// 层序遍历
+void LOrder(BTNode* root){
+	// 队列从左向右，从上到下，保存每一层的节点
+	std::queue<BTNode*> q;
+	if (root)
+		q.push(root);
+	// 队列不为空，继续遍历
+	while (!q.empty()){
+		// 获取队头元素
+		BTNode* front = q.front();
+		q.pop();
+		printf("%c ", front->_data);
+		
+		// 孩子入队
+		if (front->_left){
+			q.push(front->_left);
+		}
+		if (front->_right){
+			q.push(front->_right);
+		}
+	}
+}
+
+// 二叉树查找值为x的节点
+// 全局搜索的过程，因此在一个结果返回之后需要不断地判断，如果已经找到就直接返回
+// 已经找到就直接返回
+BTNode* BinaryTreeFind(BTNode* root, BTDataType x){
+	// 空树找不到
+	if (root == NULL){
+		return NULL;
+	}
+	if (root->_data == x){
+		return root;
+	}
+	// 查找左右子树
+	BTNode* ret = BinaryTreeFind(root->_left, x);
+	// 如果找到就直接返回
+	if (ret){
+		return ret;
+	}
+	ret = BinaryTreeFind(root->_right, x);
+	// 无论是否找到都得返回
+	return ret;
+}
+
+// 指定在一颗树中找一个节点
+BTNode* BTreeFindKey(BTNode* root, int key){
+	// 到叶子节点还没找着，说明没有，直接返回NULL
+	if (root == NULL){
+		return NULL;
+	}
+	//  如果找到直接返回
+	if (root->_data == key){
+		return root;
+	}
+	// 先找左子树
+	BTNode* ret = BTreeFindKey(root->_left, key);
+	// 如果在左子树中找着，就直接返回
+	if (ret){
+		return ret;
+	}
+	// 如果没有在其左子树中找着，就在右子树中找
+	ret = BTreeFindKey(root->_right, key);
+	// 无论是否在右子树中找着，都需将其返回
+	return ret;
+}
+
+
+// 后序非递归遍历
+void postOrder1(BTNode* root){
+	std::stack<BTNode*> st;
+	BTNode* cur = root;
+	BTNode* prev = NULL;
+
+	while (!st.empty() || cur){
+		while (cur){
+			st.push(cur);
+			cur = cur->_left;
+		}
+
+		cur = st.top();
+
+		if (cur->_right == NULL || cur->_right == prev){
+			printf("%c ", cur->_data);
+			st.pop();
+			prev = cur;
+			cur = NULL;
+		}
+		else
+		{
+			cur = cur->_right;
+		}
+	}
+}
+
+void test(){
+	char str[] = { "ABD##E#H##CF##G##" };
+	int indx = 0;
+	BTNode* root = BinaryTreeCreate(str, &indx);
+	BinaryTreePrevOrder(root);
+	printf("\n");
+
+	printf("size = %d", BinaryTreeSize(root));
+	printf("\n");
+	int num = 0;
+	BinaryTreeSize2(root, &num);
+	printf("num = %d\n", num);
+	int k = BinaryTreeLevelKSize(root, 3);
+	printf("k = %d\n", k);
+	printf("层序遍历结果：");
+	BinaryTreeLevelOrder(root);
+	printf("\n");
+	printf("前序递归：  ");
+	BinaryTreePrevOrder(root);
+	printf("\n");
+
+	printf("前序非递归：");
+	preOrder(root);
+	printf("\n");
+
+
+	printf("中序递归：  ");
+	BinaryTreeInOrder(root);
+	printf("\n");
+
+	printf("中序非递归：");
+	BinaryTreeInOrderNoR(root);
+	printf("\n");
+
+	printf("后序递归：  ");
+	BinaryTreePostOrder(root);
+	printf("\n");
+
+	printf("后序非递归：");
+	postOrder(root);
+	printf("\n");
+	printf("后序：");
+	BinaryTreePostOrderNoR(root);
+	printf("\n");
+	printf("后序：");
+	postOrder1(root);
+	printf("\n");
+
+
+	printf("层序遍历：");
+	LOrder(root);
+	printf("\n");
+
+	char c = 'D';
+	root = BTreeFindKey(root, c);
+	if (root)
+		printf("root->_data = %c\n", root->_data);
+	else
+	{
+		printf("%c 没有找到\n", c);
+	}
+
+
+	BinaryTreeDestory(&root);
+}
+
+int main(){
+	// free:释放的是指针指向的内存空间，并不是指针变量，指针变量存放在栈上，局部销毁变量就在栈上直接销毁.
+	// 指针变量不需要手动销毁
+	test();
+	system("pause");
+	return 0;
+}
